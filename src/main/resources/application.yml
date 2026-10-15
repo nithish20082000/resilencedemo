@@ -1,0 +1,54 @@
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+    ratelimiters:
+      enabled: true
+
+resilience4j:
+  retry:
+    instances:
+      demoRetry:
+        maxAttempts: 3          # 1 original call + 2 retries
+        waitDuration: 500ms
+
+  circuitbreaker:
+    instances:
+      demoBreaker:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5                  # look at the last 5 calls
+        minimumNumberOfCalls: 5               # don't judge before 5 calls
+        failureRateThreshold: 50              # open if 50% or more failed
+        waitDurationInOpenState: 10s          # stay OPEN for 10s, then HALF_OPEN
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  timelimiter:
+    instances:
+      demoTimeLimiter:
+        timeoutDuration: 2s                   # give up after 2 seconds
+        cancelRunningFuture: true
+
+  bulkhead:
+    instances:
+      demoBulkhead:
+        maxConcurrentCalls: 3                 # only 3 at the same time
+        maxWaitDuration: 0                    # 4th caller is rejected immediately
+
+  ratelimiter:
+    instances:
+      demoLimiter:
+        limitForPeriod: 3                     # 3 calls ...
+        limitRefreshPeriod: 10s               # ... per 10 seconds
+        timeoutDuration: 0                    # extra calls rejected immediately
